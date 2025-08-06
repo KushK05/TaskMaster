@@ -14,7 +14,6 @@ function App() {
   const [timerMinutes, setTimerMinutes] = useState(25)
   const [timerSeconds, setTimerSeconds] = useState(0)
   const [isTimerRunning, setIsTimerRunning] = useState(false)
-  const [timerInterval, setTimerInterval] = useState(null)
 
   // Load tasks from localStorage on component mount
   useEffect(() => {
@@ -39,33 +38,36 @@ function App() {
 
   // Timer functionality
   useEffect(() => {
+    let interval = null
+    
     if (isTimerRunning) {
-      const interval = setInterval(() => {
+      interval = setInterval(() => {
         setTimerSeconds(prevSeconds => {
           if (prevSeconds === 0) {
-            if (timerMinutes === 0) {
-              // Timer finished
-              setIsTimerRunning(false)
-              alert(`${activeMode} session completed!`)
-              return 0
-            } else {
-              setTimerMinutes(prev => prev - 1)
-              return 59
-            }
+            setTimerMinutes(prevMinutes => {
+              if (prevMinutes === 0) {
+                // Timer finished
+                setIsTimerRunning(false)
+                alert(`Timer completed!`)
+                return 0
+              } else {
+                return prevMinutes - 1
+              }
+            })
+            return 59
           } else {
             return prevSeconds - 1
           }
         })
       }, 1000)
-      setTimerInterval(interval)
-      return () => clearInterval(interval)
-    } else {
-      if (timerInterval) {
-        clearInterval(timerInterval)
-        setTimerInterval(null)
+    }
+    
+    return () => {
+      if (interval) {
+        clearInterval(interval)
       }
     }
-  }, [isTimerRunning, timerMinutes, activeMode, timerInterval])
+  }, [isTimerRunning])
 
   const formatTime = (date) => {
     return date.toLocaleTimeString('en-US', {
@@ -126,10 +128,6 @@ function App() {
   const handleModeChange = (mode) => {
     setActiveMode(mode)
     setIsTimerRunning(false)
-    if (timerInterval) {
-      clearInterval(timerInterval)
-      setTimerInterval(null)
-    }
     
     // Set timer duration based on mode
     switch (mode) {
@@ -161,10 +159,6 @@ function App() {
 
   const resetTimer = () => {
     setIsTimerRunning(false)
-    if (timerInterval) {
-      clearInterval(timerInterval)
-      setTimerInterval(null)
-    }
     handleModeChange(activeMode) // Reset to original time
   }
 
